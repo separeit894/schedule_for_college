@@ -2,9 +2,9 @@ import os
 
 import fitz  # PyMuPDF
 from PIL import Image
+
+
 path = "shedules"
-
-
 
 def converter():
 # Открытие PDF
@@ -25,4 +25,5 @@ def converter():
 
         pdf_document.close()
 
-converter()
+
+

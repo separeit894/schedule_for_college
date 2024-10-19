@@ -1,11 +1,10 @@
+import os
 import requests
 import telebot
 from telebot import types
 from bs4 import BeautifulSoup
-from cropped_photos import cropped
-from pdf_converter_to_png import converter
-import os
-import logging
+import fitz  # PyMuPDF
+from PIL import Image
 
 url = 'https://vvfmtuci.ru/studentam/raspisanie-zanyatij-i-ekzamenov/spo/'
 
@@ -45,6 +44,7 @@ def download_shedules(message):
         directory_shedules = soup.find("div", class_='page__inner').find_all("p")
         for directory in directory_shedules:
             if message.text in directory.text:
+                print(directory.text)
                 result = 'https://vvfmtuci.ru/' + directory.find('a').get("href")
 
                 try:
@@ -55,24 +55,63 @@ def download_shedules(message):
                     if not os.path.exists("shedules"):
                         os.makedirs("shedules")
 
-                    if not f"{directory.text}.pdf" in os.listdir("shedules"):
+                    else:
+                        print("фыва")
+
+                    if f"{directory.text}.pdf" in os.listdir("shedules"):
+                        print("условие выполняется")
+
+                    else:
                         with open(f"shedules/{message.text}.pdf", "wb") as file:
                             file.write(response_download)
-                            bot.send_message(message.chat.id, "файл download")
+                            # bot.send_message(message.chat.id, "файл download")
 
-                    # Вызов функций конвертации и обрезки
-                    convert = converter()
-                    print(convert)
-                    cropp = cropped()
-                    print(cropp)
+                        # Вызов функций конвертации и обрезки
+                    path = "shedules"
+
+                    # Открытие PDF
+
+                    if not f"{directory.text}" in os.listdir("photo"):
+                        print("проверка")
+                        pdf_path = f"shedules/{directory.text}.pdf"
+                        print(pdf_path)
+
+                        pdf_document = fitz.open(pdf_path)
+                        print(os.listdir(path))
+
+                        # Конвертация каждой страницы в PNG
+                        for page_number in range(len(pdf_document)):
+                            page = pdf_document.load_page(page_number)  # Загружаем страницу
+                            pix = page.get_pixmap()  # Получаем изображение страницы
+                            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # Конвертируем в PIL Image
+                            print(f"файл № {page_number} конвертирован")
+                            img.save(f'photo/{directory.text}_{page_number}.png', 'PNG')  # Сохраняем как PNG
+
+                        pdf_document.close()
+
+                    for i in range(0, 14):
+                        image = Image.open(f'photo/{directory.text}_{i}.png')
+
+                        # Определите координаты для обрезки (left, upper, right, lower)
+                        left = 50
+                        upper = 100
+                        right = 550
+                        lower = 800
+
+                        # Обрежьте изображение
+                        cropped_image = image.crop((left, upper, right, lower))
+
+                        # Сохраните обрезанное изображение
+                        cropped_image.save(f'corrected_photo/page{i}.png')
+
+                        print(f"Фото № {i} корректировано")
+
+
 
                     bot.send_message(message.chat.id, "Все выполнено")
                 except Exception as e:
                     bot.send_message(message.chat.id, f"Произошла ошибка: {e}")
                     return
-
-        # Регистрируем следующий шаг
-        # bot.register_next_step_handler(message, test1)
 
 
 def test1(message):
@@ -159,22 +198,21 @@ def result(message):
 
             bot.send_photo(message.chat.id, src)
 
-
     bot.send_message(message.chat.id, "<b>Для того чтобы выбрать другое неделю или группу\nВведите</b> /start", parse_mode="html")
-    kback = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_back = types.KeyboardButton("Назад")
-    kback.add(button_back)
+    kback = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    button_Yes = types.KeyboardButton("Да")
+    button_No = types.KeyboardButton("Нет")
+    kback.add(button_Yes, button_No)
 
-    bot.send_message(message.chat.id, "Вы хотите назад", reply_markup=kback)
+    bot.send_message(message.chat.id, "Вы хотите выбрать другую группу?", reply_markup=kback)
 
-    bot.register_next_step_handler(message, back)
+    bot.register_next_step_handler(message, quest)
 
-def back(message):
-    if message.text == "Назад":
-        bot.send_message(message.chat.id, 'кнопка назад')
-
-
-
+def quest(message):
+    if message.text == "Нет":
+        bot.send_message(message.chat.id, "Не доработано")
+    if message.text == "Да":
+        test1(message)
 
 
 # Запуск бота
