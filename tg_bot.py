@@ -55,8 +55,10 @@ def download_shedules(message):
                     if not os.path.exists("shedules"):
                         os.makedirs("shedules")
 
-                    with open(f"shedules/{message.text}.pdf", "wb") as file:
-                        file.write(response_download)
+                    if not f"{directory.text}.pdf" in os.listdir("shedules"):
+                        with open(f"shedules/{message.text}.pdf", "wb") as file:
+                            file.write(response_download)
+                            bot.send_message(message.chat.id, "файл download")
 
                     # Вызов функций конвертации и обрезки
                     convert = converter()
@@ -157,7 +159,22 @@ def result(message):
 
             bot.send_photo(message.chat.id, src)
 
+
     bot.send_message(message.chat.id, "<b>Для того чтобы выбрать другое неделю или группу\nВведите</b> /start", parse_mode="html")
+    kback = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_back = types.KeyboardButton("Назад")
+    kback.add(button_back)
+
+    bot.send_message(message.chat.id, "Вы хотите назад", reply_markup=kback)
+
+    bot.register_next_step_handler(message, back)
+
+def back(message):
+    if message.text == "Назад":
+        bot.send_message(message.chat.id, 'кнопка назад')
+
+
+
 
 
 # Запуск бота
