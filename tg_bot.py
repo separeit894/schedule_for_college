@@ -16,6 +16,15 @@ bot = telebot.TeleBot(token=os.getenv("TOKEN"))
 
 @bot.message_handler(commands=['start'])
 def main(message):
+    if not os.path.exists("shedules"):
+        os.makedirs("shedules")
+
+    if not os.path.exists("photo"):
+        os.makedirs("photo")
+
+    if not os.path.exists("corrected_photo"):
+        os.makedirs("corrected_photo")
+
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
 
     response = requests.get(url=url).text
@@ -41,6 +50,7 @@ def download_shedules(message):
     if "неделя" in message.text:
         bot.send_message(message.chat.id, f"Вы выбрали '<b>{message.text}</b>'", parse_mode="html")
 
+
         response = requests.get(url=url).text
         soup = BeautifulSoup(response, "lxml")
 
@@ -52,16 +62,6 @@ def download_shedules(message):
                 try:
                     response_download = requests.get(result_link).content
                     bot.send_message(message.chat.id, "<b>Пожалуйста, подождите 10-20 секунд</b>", parse_mode="html")
-
-                    # Создаем директорию, если она не существует
-                    if not os.path.exists("shedules"):
-                        os.makedirs("shedules")
-
-                    if not os.path.exists("photo"):
-                        os.makedirs("photo")
-
-                    if not os.path.exists("corrected_photo"):
-                        os.makedirs("corrected_photo")
 
 
                     if f"{directory.text}.pdf" in os.listdir("shedules"):
