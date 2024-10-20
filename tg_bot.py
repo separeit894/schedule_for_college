@@ -12,7 +12,7 @@ load_dotenv()
 
 url = 'https://vvfmtuci.ru/studentam/raspisanie-zanyatij-i-ekzamenov/spo/'
 
-bot = telebot.TeleBot(token=os.getenv("TOKEN"))
+bot = telebot.TeleBot(token="'7471804498:AAFvG24hlMvOLr8XDTygBJGe4WgDOL8RnnQ'")
 
 
 @bot.message_handler(commands=['start'])
