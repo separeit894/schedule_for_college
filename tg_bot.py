@@ -57,6 +57,12 @@ def download_shedules(message):
                     if not os.path.exists("shedules"):
                         os.makedirs("shedules")
 
+                    if not os.path.exists("photo"):
+                        os.makedirs("photo")
+
+                    if not os.path.exists("corrected_photo"):
+                        os.makedirs("corrected_photo")
+
 
                     if f"{directory.text}.pdf" in os.listdir("shedules"):
                         print(f"{directory.text}.pdf есть в директории")
