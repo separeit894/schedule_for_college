@@ -272,14 +272,18 @@ def private_reset(message):
     bot.send_message(message.chat.id, "Корректированные файлы удалены")
 
 def auto_reset():
+
+    # Получаем текущее время
     while True:
-        # Получаем текущее время
         now = datetime.now()
+        print(now)
 
         # Проверяем, если текущее время 23:00
+        if now.hour == 23 and now.minute == 54 and now.second == 50:
+            print("Время наступило")
 
         if now.hour == 0 and now.minute == 0 and now.second == 0:
-
+            print("Время наступило")
             # Удаление файлов с расписаниями
             directory_path = 'shedules'
 
@@ -319,6 +323,8 @@ def auto_reset():
                 bot.send_message(chat_id, "Произошел reset бота")
             # Ждем 60 секунд, чтобы избежать многократного вывода
             time.sleep(60)
+
+        time.sleep(1)
 
 
 
