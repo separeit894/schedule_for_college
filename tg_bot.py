@@ -5,10 +5,14 @@ from telebot import types
 from bs4 import BeautifulSoup
 import fitz  # PyMuPDF
 from PIL import Image
+from dotenv import load_dotenv
+from pdf2image import convert_from_path
+
+load_dotenv()
 
 url = 'https://vvfmtuci.ru/studentam/raspisanie-zanyatij-i-ekzamenov/spo/'
 
-bot = telebot.TeleBot(token='7471804498:AAFvG24hlMvOLr8XDTygBJGe4WgDOL8RnnQ')
+bot = telebot.TeleBot(token=os.getenv("TOKEN"))
 
 
 @bot.message_handler(commands=['start'])
@@ -55,8 +59,6 @@ def download_shedules(message):
                     if not os.path.exists("shedules"):
                         os.makedirs("shedules")
 
-                    else:
-                        print("фыва")
 
                     if f"{directory.text}.pdf" in os.listdir("shedules"):
                         print("условие выполняется")
@@ -67,36 +69,50 @@ def download_shedules(message):
                             # bot.send_message(message.chat.id, "файл download")
 
                         # Вызов функций конвертации и обрезки
-                    path = "shedules"
+
 
                     # Открытие PDF
 
-                    if not f"{directory.text}" in os.listdir("photo"):
-                        print("проверка")
+                    if not f"{message.text}" in os.listdir("photo"):
+                        # for i in range(0, 14):
+                        #     image = Image.open(f'photo/{directory.text}_{i}.png')
+                        #
+                        #     # Определите координаты для обрезки (left, upper, right, lower)
+                        #     left = 100
+                        #     upper = 300
+                        #     right = 1500
+                        #     lower = 2100
+                        #
+                        #     # Обрежьте изображение
+                        #     cropped_image = image.crop((left, upper, right, lower))
+                        #
+                        #     # Сохраните обрезанное изображение
+                        #     cropped_image.save(f'corrected_photo/page{i}.png')
+                        #
+                        #     print(f"Фото № {i} корректировано")
+                        # print(message.text)
+                        #
                         pdf_path = f"shedules/{directory.text}.pdf"
-                        print(pdf_path)
 
-                        pdf_document = fitz.open(pdf_path)
-                        print(os.listdir(path))
+                        images = convert_from_path(pdf_path)
+                        for i, image in enumerate(images):
+                            image.save(f"photo/{directory.text}_{i}.png", "PNG")
+                            print(f"файл № {i} конвертирован")
 
-                        # Конвертация каждой страницы в PNG
-                        for page_number in range(len(pdf_document)):
-                            page = pdf_document.load_page(page_number)  # Загружаем страницу
-                            pix = page.get_pixmap()  # Получаем изображение страницы
-                            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # Конвертируем в PIL Image
-                            print(f"файл № {page_number} конвертирован")
-                            img.save(f'photo/{directory.text}_{page_number}.png', 'PNG')  # Сохраняем как PNG
+                    else:
+                        print("уже конвертированы")
 
-                        pdf_document.close()
+
+
 
                     for i in range(0, 14):
                         image = Image.open(f'photo/{directory.text}_{i}.png')
 
                         # Определите координаты для обрезки (left, upper, right, lower)
-                        left = 50
-                        upper = 100
-                        right = 550
-                        lower = 800
+                        left = 100
+                        upper = 300
+                        right = 1500
+                        lower = 2100
 
                         # Обрежьте изображение
                         cropped_image = image.crop((left, upper, right, lower))

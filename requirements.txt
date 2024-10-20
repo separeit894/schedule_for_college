@@ -26,9 +26,11 @@ poppler-utils==0.1.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pykwalify==1.7.0
+PyMuPDF==1.24.11
 pyTelegramBotAPI==4.23.0
 python-box==5.1.1
 python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
 PyYAML==5.3.1
 requests==2.32.3
 requests-oauthlib==2.0.0
@@ -43,4 +45,5 @@ spython==0.0.79
 telebot==0.0.5
 trio==0.27.0
 urllib3==2.2.3
+Wand==0.6.13
 websocket-client==1.8.0
