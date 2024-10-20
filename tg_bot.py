@@ -1,4 +1,4 @@
-import os
+import os, time
 import requests
 import telebot
 from telebot import types
@@ -6,24 +6,32 @@ from bs4 import BeautifulSoup
 from PIL import Image
 from dotenv import load_dotenv
 from pdf2image import convert_from_path
-
+import threading
+from datetime import datetime
 load_dotenv()
+
+# Список для хранения идентификаторов чатов
+chat_ids = []
 
 url = 'https://vvfmtuci.ru/studentam/raspisanie-zanyatij-i-ekzamenov/spo/'
 
 bot = telebot.TeleBot(token=os.getenv("TOKEN"))
 
 
+if not os.path.exists("shedules"):
+    os.makedirs("shedules")
+
+if not os.path.exists("photo"):
+    os.makedirs("photo")
+
+if not os.path.exists("corrected_photo"):
+    os.makedirs("corrected_photo")
+
 @bot.message_handler(commands=['start'])
 def main(message):
-    if not os.path.exists("shedules"):
-        os.makedirs("shedules")
+    chat_ids.append(message.chat.id)
 
-    if not os.path.exists("photo"):
-        os.makedirs("photo")
-
-    if not os.path.exists("corrected_photo"):
-        os.makedirs("corrected_photo")
+    bot.send_message(message.chat.id, "<b>Сброс бота происходит в полночь по московскому времени!</b>", parse_mode="html")
 
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
 
@@ -33,14 +41,16 @@ def main(message):
     directory_shedules = soup.find("div", class_='page__inner').find_all("p")
 
     button_shedules = []
+
     for directory in directory_shedules:
         if "неделя" in directory.text:
             button_shedules.append(directory.text)
 
+
     for button in button_shedules:
         keyboard.add(button)
 
-    bot.send_message(message.chat.id, "Привет, выберите неделю", reply_markup=keyboard)
+    bot.send_message(message.chat.id, "Здравствуйте, выберите неделю: ", reply_markup=keyboard)
 
     # Регистрируем следующий шаг
     bot.register_next_step_handler(message, test1)
@@ -195,7 +205,7 @@ def result(message):
 
             bot.send_photo(message.chat.id, src)
 
-    bot.send_message(message.chat.id, "<b>Для того чтобы выбрать другую неделю или группу\nВведите</b> /start",
+    bot.send_message(message.chat.id, "<b>Для того чтобы выбрать другую неделю.\nВведите</b> /start",
                      parse_mode="html")
     keyboard_back = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     button_yes = types.KeyboardButton("Да")
@@ -217,14 +227,14 @@ def quest(message):
                 if os.path.isfile(file_path):  # Проверяем, что это файл
                     os.remove(file_path)
                     print(f'Файл {file_path} удалён.')
-        bot.send_message(message.chat.id, "<b>Для того чтобы выбрать другую неделю или группу\nВведите</b> /start", parse_mode="html")
+        bot.send_message(message.chat.id, "<b>Для того чтобы выбрать другую неделю.\nВведите</b> /start", parse_mode="html")
     if message.text == "Да":
         test1(message)
 
 
 # пока что в доработке
 @bot.message_handler(commands=['reset'])
-def private_bot(message):
+def private_reset(message):
     # Удаление файлов с расписаниями
     directory_path = 'shedules'
 
@@ -261,6 +271,58 @@ def private_bot(message):
 
     bot.send_message(message.chat.id, "Корректированные файлы удалены")
 
+def auto_reset():
+    while True:
+        # Получаем текущее время
+        now = datetime.now()
+
+        # Проверяем, если текущее время 23:00
+
+        if now.hour == 0 and now.minute == 0 and now.second == 0:
+
+            # Удаление файлов с расписаниями
+            directory_path = 'shedules'
+
+            # Удаляем все файлы в директории
+            for filename in os.listdir(directory_path):
+                file_path = os.path.join(directory_path, filename)
+                if os.path.isfile(file_path):  # Проверяем, что это файл
+                    os.remove(file_path)
+                    print(f'Файл {file_path} удалён.')
+
+            print("файлы с расписаниями удалены")
+            # Удаление все конвертированных png
+            directory_path = 'photo'
+
+            # Удаляем все файлы в директории
+            for filename in os.listdir(directory_path):
+                file_path = os.path.join(directory_path, filename)
+                if os.path.isfile(file_path):  # Проверяем, что это файл
+                    os.remove(file_path)
+                    print(f'Файл {file_path} удалён.')
+
+            print("png удалены")
+
+
+            # Удаление корректрированныe png
+            directory_path = 'corrected_photo'
+
+            # Удаляем все файлы в директории
+            for filename in os.listdir(directory_path):
+                file_path = os.path.join(directory_path, filename)
+                if os.path.isfile(file_path):  # Проверяем, что это файл
+                    os.remove(file_path)
+                    print(f'Файл {file_path} удалён.')
+
+            print("корректированные png удалены")
+            for chat_id in chat_ids:
+                bot.send_message(chat_id, "Произошел reset бота")
+            # Ждем 60 секунд, чтобы избежать многократного вывода
+            time.sleep(60)
+
+
+
+threading.Thread(target=auto_reset, daemon=True).start()
 
 
 # Запуск бота
